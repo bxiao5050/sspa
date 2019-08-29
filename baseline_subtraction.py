@@ -67,12 +67,6 @@ class Baseline_subtraction(Frame):
 
         self.menubar()
 
-
-
-    def on_updateXrange(self):
-        self.drag.set_Xrange(left = float(self.xLeft_e.get()), right = float(self.xRight_e.get()))
-        self.baseline(self.baseline_choose)
-
     def menubar(self):
         self.menubar = Menu(self.master)
 
@@ -105,6 +99,12 @@ class Baseline_subtraction(Frame):
 
         # display the menu
         self.master.config(menu=self.menubar)
+
+    def on_updateXrange(self):
+        self.drag.set_Xrange(left = float(self.xLeft_e.get()), right = float(self.xRight_e.get()))
+        self.baseline(self.baseline_choose)
+
+
 
     def openReference(self):
         subprocess.Popen('443199618.pdf', shell = True)
