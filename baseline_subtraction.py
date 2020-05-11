@@ -50,20 +50,6 @@ class Baseline_subtraction(Frame):
         toolbar.update()
 
 
-        lf1.pack()
-        self.canvas.get_tk_widget().pack( side = 'top', fill= 'both', expand=True)
-        self.canvas._tkcanvas.pack(side = 'bottom', fill= 'both', expand=True)
-        lf_x = LabelFrame(leftFrame, text = 'set x range', fg = 'blue')
-        lf_x.pack()
-        self.xLeft_e = Entry(lf_x, width = 10, fg = 'blue') # x range
-        self.xRight_e = Entry(lf_x, width = 10, fg = 'blue')
-        self.xLeft_e.pack(side = 'left', padx = (5,3))
-        Label(lf_x, text = '-').pack(side = 'left')
-
-        self.xRight_e.pack(side = 'left', padx = (3,15))
-        Button(lf_x, text = 'update x range', command = self.on_updateXrange).pack()
-        self.var1 = IntVar()
-        Checkbutton(leftFrame, text = 'export as normalized data', variable = self.var1).pack()
 
         self.menubar()
 
@@ -100,15 +86,25 @@ class Baseline_subtraction(Frame):
         # display the menu
         self.master.config(menu=self.menubar)
 
+    def openReference(self):
+        subprocess.Popen('443199618.pdf', shell = True)
+
     def on_updateXrange(self):
         self.drag.set_Xrange(left = float(self.xLeft_e.get()), right = float(self.xRight_e.get()))
         self.baseline(self.baseline_choose)
 
+    def import_csv(self):
+        path = askopenfilename(parent=self ,title='Choose a csv file', filetypes = (("csv files","*.csv"),("all files","*.*")))
+        #
+        if len(path) != 0:
+            self.title = path
+            basename = os.path.basename(path)
+            filebase = os.path.splitext(basename)[1]
+            # self.config(text = os.path.splitext(basename)[0])
+        if len(path) != 0 and filebase == '.csv':
+            self.expData = pd.read_csv(path, header = 0)
 
-
-    def openReference(self):
-        subprocess.Popen('443199618.pdf', shell = True)
-
+        self.polular_combobox(self.expData)
 
     def import_xy_files(self):
         files = askopenfilenames(parent=self,title='Choose .xy files', filetypes = (("xy files","*.xy"),("all files","*.*")))
@@ -123,18 +119,7 @@ class Baseline_subtraction(Frame):
                 self.expData.insert(index + 1, os.path.splitext(os.path.basename(f))[0], df.iloc[:,1])
         self.polular_combobox(self.expData)
 
-    def import_csv(self):
-        path = askopenfilename(parent=self ,title='Choose a csv file', filetypes = (("csv files","*.csv"),("all files","*.*")))
-        #
-        if len(path) != 0:
-            self.title = path
-            basename = os.path.basename(path)
-            filebase = os.path.splitext(basename)[1]
-            # self.config(text = os.path.splitext(basename)[0])
-        if len(path) != 0 and filebase == '.csv':
-            self.expData = pd.read_csv(path, header = 0)
 
-        self.polular_combobox(self.expData)
 
     def baseline(self, method):
         if self.line_baseline is not None and len(self.line_baseline)>0:
