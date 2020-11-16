@@ -176,23 +176,6 @@ class Baseline_subtraction(Frame):
         return (y - min(y))/(max(y) - min(y))
 
 
-    def batch(self):
-        data_corr = pd.DataFrame()
-        x0= self.expData.iloc[:,0]
-        x_range = self.drag.getXrange()
-        self.index_range = np.logical_and(x0 >= x_range[0], x0 <= x_range[1])
-
-        self.x= x0[self.index_range]
-        data_corr.insert(0, 'x', self.x)
-
-        for i in range(len(self.expData.columns) -1):
-            j = i+1
-            y0 = self.expData.iloc[:, j]
-            self.y= y0[self.index_range]
-            y_baseline = peakutils.baseline(self.y) if self.baseline_choose == 'auto' else self.baseline_als2(self.y,lam = float(self.lam_l.cget('text')), p = float(self.p_l.cget('text')))
-            y_corr = self.y - y_baseline if self.var1.get() == 0 else self.normalization(self.y - y_baseline)
-            data_corr.insert(j, self.expData.columns[j], y_corr)
-        return data_corr
 
 
 
@@ -221,12 +204,6 @@ class Baseline_subtraction(Frame):
         self.plotline(filename)
         self.baseline(self.baseline_choose)
         self.drag.update_ylim()
-
-
-
-    def plotline(self, filename):
-        # self.ax.clear()
-
         if self.line is not None:
             self.line.pop(0).remove()
 
@@ -234,6 +211,9 @@ class Baseline_subtraction(Frame):
         self.line = self.ax.plot(x, y, label = f'{filename}__original', color = 'black')
         self.ax.set_ylim([min(y)-abs(max(y)*0.05), max(y)*1.05])
         self.canvas.draw()
+
+
+
 
     def baseline_als2(self, y, lam = 1e8, p =0.0001, niter=10):
         if self.alsPara is None:
