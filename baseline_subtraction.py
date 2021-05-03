@@ -176,7 +176,48 @@ class Baseline_subtraction(Frame):
         return (y - min(y))/(max(y) - min(y))
 
 
+    def baseline_als2(self, y, lam = 1e8, p =0.0001, niter=10):
+        if self.alsPara is None:
+            self.alsPara = LabelFrame(self, text = 'set parameters', fg = 'blue')
+            self.alsPara.pack(side = 'right', anchor = 'n')
+            lamV = IntVar()
+            pV = IntVar()
+            lam_f = LabelFrame(self.alsPara, text = 'lambda: (1e2 - 1e9)')
+            p_f = LabelFrame(self.alsPara, text = 'p: (0.0001 - 0.1)')
+            lam_f.pack()
+            self.lam_l = Label(lam_f)
+            self.p_l = Label(p_f)
 
+            lam_s = Scale(lam_f, from_=2, to=11, resolution = 1,variable = lamV, length=600, showvalue =0, command=self.setValue_lam)
+            lam_s.set(8)
+            self.lam_l.config(text = 9)
+            lam_f.pack(side = 'left')
+            self.lam_l .pack()
+            lam_s.pack()
+
+            p_f.pack(side = 'right')
+            p_s = Scale(p_f, from_=0.0001, to=0.1, resolution = 0.0001,  variable = pV, length=600,showvalue =0,  command=self.setValue_p)
+            p_s.set(0.0001)
+            self.p_l.config(text = 0.0001)
+
+            p_f.pack()
+            self.p_l .pack()
+            p_s.pack()
+        else:
+            self.alsPara.pack(side = 'right', anchor = 'n')
+
+
+        L = len(y)
+        D = sparse.diags([1,-2,1],[0,-1,-2], shape=(L,L-2))
+        D = lam * D.dot(D.transpose()) # Precompute this term since it does not depend on `w`
+        w = np.ones(L)
+        W = sparse.spdiags(w, 0, L, L)
+        for i in range(niter):
+            W.setdiag(w) # Do not create a new matrix, just update diagonal values
+            Z = W + D
+            z = spsolve(Z, w*y)
+            w = p * (y > z) + (1-p) * (y < z)
+        return z
 
 
     def polular_combobox(self, data):
@@ -211,8 +252,6 @@ class Baseline_subtraction(Frame):
         self.line = self.ax.plot(x, y, label = f'{filename}__original', color = 'black')
         self.ax.set_ylim([min(y)-abs(max(y)*0.05), max(y)*1.05])
         self.canvas.draw()
-
-
 
 
     def baseline_als2(self, y, lam = 1e8, p =0.0001, niter=10):

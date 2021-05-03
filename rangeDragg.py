@@ -7,7 +7,7 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolb
 from tkinter import *
 
 class RangeDrag():
-    def __init__(self, master, color = 'green', ax = None, startPos_left = None,startPos_right = None, left_e = None, right_e = None):
+    def __init__(self, master, para):
 
 
         if ax is None:
