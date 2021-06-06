@@ -50,8 +50,28 @@ class Baseline_subtraction(Frame):
         toolbar.update()
 
 
+        lf1.pack()
+        self.canvas.get_tk_widget().pack( side = 'top', fill= 'both', expand=True)
+        self.canvas._tkcanvas.pack(side = 'bottom', fill= 'both', expand=True)
+        lf_x = LabelFrame(leftFrame, text = 'set x range', fg = 'blue')
+        lf_x.pack()
+        self.xLeft_e = Entry(lf_x, width = 10, fg = 'blue') # x range
+        self.xRight_e = Entry(lf_x, width = 10, fg = 'blue')
+        self.xLeft_e.pack(side = 'left', padx = (5,3))
+        Label(lf_x, text = '-').pack(side = 'left')
+
+        self.xRight_e.pack(side = 'left', padx = (3,15))
+        Button(lf_x, text = 'update x range', command = self.on_updateXrange).pack()
+        self.var1 = IntVar()
+        Checkbutton(leftFrame, text = 'export as normalized data', variable = self.var1).pack()
 
         self.menubar()
+
+
+
+    def on_updateXrange(self):
+        self.drag.set_Xrange(left = float(self.xLeft_e.get()), right = float(self.xRight_e.get()))
+        self.baseline(self.baseline_choose)
 
     def menubar(self):
         self.menubar = Menu(self.master)
@@ -89,22 +109,6 @@ class Baseline_subtraction(Frame):
     def openReference(self):
         subprocess.Popen('443199618.pdf', shell = True)
 
-    def on_updateXrange(self):
-        self.drag.set_Xrange(left = float(self.xLeft_e.get()), right = float(self.xRight_e.get()))
-        self.baseline(self.baseline_choose)
-
-    def import_csv(self):
-        path = askopenfilename(parent=self ,title='Choose a csv file', filetypes = (("csv files","*.csv"),("all files","*.*")))
-        #
-        if len(path) != 0:
-            self.title = path
-            basename = os.path.basename(path)
-            filebase = os.path.splitext(basename)[1]
-            # self.config(text = os.path.splitext(basename)[0])
-        if len(path) != 0 and filebase == '.csv':
-            self.expData = pd.read_csv(path, header = 0)
-
-        self.polular_combobox(self.expData)
 
     def import_xy_files(self):
         files = askopenfilenames(parent=self,title='Choose .xy files', filetypes = (("xy files","*.xy"),("all files","*.*")))
@@ -119,7 +123,18 @@ class Baseline_subtraction(Frame):
                 self.expData.insert(index + 1, os.path.splitext(os.path.basename(f))[0], df.iloc[:,1])
         self.polular_combobox(self.expData)
 
+    def import_csv(self):
+        path = askopenfilename(parent=self ,title='Choose a csv file', filetypes = (("csv files","*.csv"),("all files","*.*")))
+        #
+        if len(path) != 0:
+            self.title = path
+            basename = os.path.basename(path)
+            filebase = os.path.splitext(basename)[1]
+            # self.config(text = os.path.splitext(basename)[0])
+        if len(path) != 0 and filebase == '.csv':
+            self.expData = pd.read_csv(path, header = 0)
 
+        self.polular_combobox(self.expData)
 
     def baseline(self, method):
         if self.line_baseline is not None and len(self.line_baseline)>0:
@@ -176,48 +191,24 @@ class Baseline_subtraction(Frame):
         return (y - min(y))/(max(y) - min(y))
 
 
-    def baseline_als2(self, y, lam = 1e8, p =0.0001, niter=10):
-        if self.alsPara is None:
-            self.alsPara = LabelFrame(self, text = 'set parameters', fg = 'blue')
-            self.alsPara.pack(side = 'right', anchor = 'n')
-            lamV = IntVar()
-            pV = IntVar()
-            lam_f = LabelFrame(self.alsPara, text = 'lambda: (1e2 - 1e9)')
-            p_f = LabelFrame(self.alsPara, text = 'p: (0.0001 - 0.1)')
-            lam_f.pack()
-            self.lam_l = Label(lam_f)
-            self.p_l = Label(p_f)
+    def batch(self):
+        data_corr = pd.DataFrame()
+        x0= self.expData.iloc[:,0]
+        x_range = self.drag.getXrange()
+        self.index_range = np.logical_and(x0 >= x_range[0], x0 <= x_range[1])
 
-            lam_s = Scale(lam_f, from_=2, to=11, resolution = 1,variable = lamV, length=600, showvalue =0, command=self.setValue_lam)
-            lam_s.set(8)
-            self.lam_l.config(text = 9)
-            lam_f.pack(side = 'left')
-            self.lam_l .pack()
-            lam_s.pack()
+        self.x= x0[self.index_range]
+        data_corr.insert(0, 'x', self.x)
 
-            p_f.pack(side = 'right')
-            p_s = Scale(p_f, from_=0.0001, to=0.1, resolution = 0.0001,  variable = pV, length=600,showvalue =0,  command=self.setValue_p)
-            p_s.set(0.0001)
-            self.p_l.config(text = 0.0001)
+        for i in range(len(self.expData.columns) -1):
+            j = i+1
+            y0 = self.expData.iloc[:, j]
+            self.y= y0[self.index_range]
+            y_baseline = peakutils.baseline(self.y) if self.baseline_choose == 'auto' else self.baseline_als2(self.y,lam = float(self.lam_l.cget('text')), p = float(self.p_l.cget('text')))
+            y_corr = self.y - y_baseline if self.var1.get() == 0 else self.normalization(self.y - y_baseline)
+            data_corr.insert(j, self.expData.columns[j], y_corr)
+        return data_corr
 
-            p_f.pack()
-            self.p_l .pack()
-            p_s.pack()
-        else:
-            self.alsPara.pack(side = 'right', anchor = 'n')
-
-
-        L = len(y)
-        D = sparse.diags([1,-2,1],[0,-1,-2], shape=(L,L-2))
-        D = lam * D.dot(D.transpose()) # Precompute this term since it does not depend on `w`
-        w = np.ones(L)
-        W = sparse.spdiags(w, 0, L, L)
-        for i in range(niter):
-            W.setdiag(w) # Do not create a new matrix, just update diagonal values
-            Z = W + D
-            z = spsolve(Z, w*y)
-            w = p * (y > z) + (1-p) * (y < z)
-        return z
 
 
     def polular_combobox(self, data):
@@ -245,6 +236,12 @@ class Baseline_subtraction(Frame):
         self.plotline(filename)
         self.baseline(self.baseline_choose)
         self.drag.update_ylim()
+
+
+
+    def plotline(self, filename):
+        # self.ax.clear()
+
         if self.line is not None:
             self.line.pop(0).remove()
 
@@ -252,7 +249,6 @@ class Baseline_subtraction(Frame):
         self.line = self.ax.plot(x, y, label = f'{filename}__original', color = 'black')
         self.ax.set_ylim([min(y)-abs(max(y)*0.05), max(y)*1.05])
         self.canvas.draw()
-
 
     def baseline_als2(self, y, lam = 1e8, p =0.0001, niter=10):
         if self.alsPara is None:

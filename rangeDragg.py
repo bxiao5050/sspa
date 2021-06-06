@@ -7,7 +7,7 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolb
 from tkinter import *
 
 class RangeDrag():
-    def __init__(self, master, para):
+    def __init__(self, master, color = 'green', ax = None, startPos_left = None,startPos_right = None, left_e = None, right_e = None):
 
 
         if ax is None:
@@ -63,6 +63,8 @@ class RangeDrag():
 
         self.rect1.figure.canvas.draw()
 
+        # print(self.getXrange())
+
     def update_ylim(self):
         ymin, ymax = self.ax.get_ylim()
         self.rect1.set_height(abs(ymax-ymin))
@@ -71,14 +73,20 @@ class RangeDrag():
 
         self.rect1.figure.canvas.draw()
 
+
+
     def getXrange(self):
         return (self.rect1.xy[0], self.rect2.xy[0])
+
+
 
     def changeColor(self, color):
         self.rect1.set_color(color)
         self.rect2.set_color(color)
         self.middle.set_color(color)
         self.rect1.figure.canvas.draw()
+
+
 
     class DraggableRectangle:
         lock = None  # only one can be animated at a time
@@ -94,6 +102,7 @@ class RangeDrag():
             self.left_e = left_e
             self.right_e = right_e
             self.ismiddle = ismiddle
+
 
 
         def connect(self):
@@ -140,24 +149,7 @@ class RangeDrag():
         def on_motion(self, event):
             self.motion(event)
 
-        def on_release(self, event):
-            'on release we reset the press data'
-            if self.lock is not self:
-                return
-
-            self.press = None
-            self.lock = None
-
-            # turn off the rect animation property and reset the background
-            self.rect.set_animated(False)
-            self.middle.set_animated(False)
-            self.other.set_animated(False)
-            self.background = None
-
-            # redraw the full figure
-            self.rect.figure.canvas.draw()
-
-def motion(self, event):
+        def motion(self, event):
             'on motion we will move the rect if the mouse is over us'
             if self.lock is not self:
                 return
@@ -197,6 +189,24 @@ def motion(self, event):
             canvas.restore_region(self.background)
             axes.draw_artist(self.rect)
             canvas.blit(axes.bbox)
+
+        def on_release(self, event):
+            'on release we reset the press data'
+            if self.lock is not self:
+                return
+
+            self.press = None
+            self.lock = None
+
+            # turn off the rect animation property and reset the background
+            self.rect.set_animated(False)
+            self.middle.set_animated(False)
+            self.other.set_animated(False)
+            self.background = None
+
+            # redraw the full figure
+            self.rect.figure.canvas.draw()
+
 
 
 
