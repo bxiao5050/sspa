@@ -111,6 +111,8 @@ class Baseline_subtraction(Frame):
 
 
     def import_xy_files(self):
+
+
         files = askopenfilenames(parent=self,title='Choose .xy files', filetypes = (("xy files","*.xy"),("all files","*.*")))
         sortedfile = sorted([f for f in self.tk.splitlist(files)])
 
@@ -124,6 +126,7 @@ class Baseline_subtraction(Frame):
         self.polular_combobox(self.expData)
 
     def import_csv(self):
+
         path = askopenfilename(parent=self ,title='Choose a csv file', filetypes = (("csv files","*.csv"),("all files","*.*")))
         #
         if len(path) != 0:
@@ -135,6 +138,7 @@ class Baseline_subtraction(Frame):
             self.expData = pd.read_csv(path, header = 0)
 
         self.polular_combobox(self.expData)
+
 
     def baseline(self, method):
         if self.line_baseline is not None and len(self.line_baseline)>0:
