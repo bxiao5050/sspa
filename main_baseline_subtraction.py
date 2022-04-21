@@ -107,7 +107,7 @@ class Baseline_subtraction(Frame):
         self.master.config(menu=self.menubar)
 
     def openReference(self):
-        subprocess.Popen('443199618.pdf', shell = True)
+        subprocess.Popen('reference.pdf', shell = True)
 
 
     def import_xy_files(self):
